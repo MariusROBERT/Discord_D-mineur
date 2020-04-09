@@ -84,8 +84,8 @@ class Game():
                             except IndexError:
                                 pass
 
-        elif self.map_affiche[y, x] in logo.values() and self.map_affiche[y, x] != "⬛": # and self.map_affiche[y, x] != "🚩":
-                self.double_click(y, x)
+        elif self.map_affiche[y, x] in logo.values() and self.map_affiche[y, x] != "⬛":
+            self.double_click(y, x)
 
 
         self.check_win()
