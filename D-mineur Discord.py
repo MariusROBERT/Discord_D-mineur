@@ -15,7 +15,7 @@ pourcentageMines = 12
 comparaison = np.ones((3, 3), dtype=int)
 comparaison[1, 1] = 0
 affichage_mine = " M "
-logo = {0:"🟦", 1:"1️⃣", 2:"2️⃣", 3:"3️⃣", 4:"4️⃣",
+logo = {0:"⬛", 1:"1️⃣", 2:"2️⃣", 3:"3️⃣", 4:"4️⃣",
         5:"5️⃣", 6:"6️⃣", 7:"7️⃣", 8:"8️⃣", 9:"9️⃣", 10:"🔟"}
 victoire = False
 loose = False
@@ -50,7 +50,7 @@ def initialisation(longueur, hauteur):
     map_connue = np.ones((hauteur, longueur), dtype=int)
     map_mines = np.zeros((hauteur, longueur), dtype=int)
     map_affiche = np.zeros((hauteur, longueur), dtype=int)
-    map_affiche = np.where(map_affiche==0, "⬛", map_affiche)
+    map_affiche = np.where(map_affiche==0, "🟦", map_affiche)
     map_jeu = (np.random.randint(0, 100, (hauteur, longueur)) <= pourcentageMines).astype(int)
     map_compteur = signal.convolve2d(map_jeu, comparaison, mode="same", boundary="fill")
 
@@ -60,17 +60,17 @@ def initialisation(longueur, hauteur):
 
 def click(y, x):
     global map_affiche, loose
-    if map_jeu[y, x] == 1 and map_affiche[y, x] == "⬛":
+    if map_jeu[y, x] == 1 and map_affiche[y, x] == "🟦":
         print("Perdu")
         loose = True
         map_affiche[y, x] = "❌"
 
     else:
-        if map_affiche[y, x] == "⬛":
+        if map_affiche[y, x] == "🟦":
             map_affiche[y, x] = logo.get(map_compteur[y, x])
             map_connue[y, x] = 0
             try:
-                if map_affiche[y, x] == "🟦":
+                if map_affiche[y, x] == "⬛":
                     for i in range(-1, 2):
                         for j in range(-1, 2):
                             if y+i>=0 and x+j>=0:
@@ -82,12 +82,12 @@ def click(y, x):
 
 def drapeau(y, x):
     global map_affiche
-    if map_affiche[y, x] == "⬛":
+    if map_affiche[y, x] == "🟦":
         map_affiche[y, x] = "🚩"
         map_mines[y, x] = 1
 
     elif map_affiche[y, x] == "🚩":
-        map_affiche[y, x] = "⬛"
+        map_affiche[y, x] = "🟦"
         map_mines[y, x] = 0
 
     check_win()
@@ -178,7 +178,7 @@ async def on_message(message):
                 else:
                     coords = [int(message_split[3])-1, int(message_split[2])-1]
                     print(coords)
-                    if map_affiche[coords[0], coords[1]] == "⬛":
+                    if map_affiche[coords[0], coords[1]] == "🟦":
                         click(coords[0], coords[1])
                     else:
                         double_click(coords[0], coords[1])
