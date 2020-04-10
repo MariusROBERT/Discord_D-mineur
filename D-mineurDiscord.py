@@ -3,7 +3,6 @@
 import numpy as np
 from scipy import signal
 import discord
-from discord.ext import tasks
 
 
 client = discord.Client()
@@ -141,7 +140,9 @@ async def send_message(channel, message):
 
 
 
-def analyse_commande(message_split):
+def analyse_commande(message):
+    message_split = message.content.split()
+
     try:
         nom_game = message_split[2]
     except IndexError:
@@ -181,15 +182,19 @@ def analyse_commande(message_split):
 @client.event
 async def on_message(message):
     if message.author == client.user:
+        print("non1")
         return
     if message.author.bot:
+        print("non2")
         return
 
-    split_message = message.content.split()
-
-    if len(split_message) < 2:
+    message_split = message.content.split()
+    print (message_split)
+    if len(message_split) < 2:
+        print("non3")
         return
     if message_split[0] != "+dm":
+        print("non4")
         return
 
     if message_split[1] == "new":
@@ -213,18 +218,22 @@ async def on_message(message):
             await send_message(message.channel, "Partie `{}` crée".format(nom_game))
 
     elif message_split[1] == "dig" or message_split[1] == "d":
-        analyse = analyse_commande(message_split)
+        print('in dig')
+        analyse = analyse_commande(message)
+        print(analyse)
         if analyse[0] == "erreur_format":
             await send_message(message.channel, analyse[1])
         else:
             analyse[0].click(analyse[1], analyse[2])
+            await affiche_game(message.channel, analyse[0])
 
     elif message_split[1] == "flag" or message_split[1] == "f":
-        analyse = analyse_commande(message_split)
+        analyse = analyse_commande(message)
         if analyse[0] == "erreur_format":
             await send_message(message.channel, analyse[1])
         else:
             analyse[0].drapeau(analyse[1], analyse[2])
+            await affiche_game(message.channel, analyse[0])
 
     elif message_split[1] == "add":
         try:
