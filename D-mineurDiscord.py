@@ -40,7 +40,7 @@ texte_aide = ("Démineur développé entièrement par Marius ROBERT\n\n"
 # Classes
 
 class Game():
-    def __init__(self, nom, joueur, hauteur=10, longueur=10, pourcentageMines=1):
+    def __init__(self, nom, joueur, hauteur=10, longueur=10, pourcentageMines=10):
         self.nom = nom
         self.hauteur = hauteur
         self.longueur = longueur
