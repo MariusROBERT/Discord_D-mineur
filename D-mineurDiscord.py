@@ -11,7 +11,7 @@ client = discord.Client()
 with open("token.txt","r") as f:
     token = f.readline().replace("\n","")
 
-    
+
 # Variables
 
 longueur = 10
@@ -139,162 +139,115 @@ async def send_message(channel, message):
     await channel.send(message)
 
 
+
+
+def analyse_commande(message_split):
+    try:
+        nom_game = message_split[2]
+    except IndexError:
+        return "erreur_format", "Veuillez spécifier un nom de partie"
+    try:
+        game = liste_parties[nom_game]
+    except:
+        return "erreur_format", "La partie `{}` n'existe pas".format(nom_game)
+
+    if not message.author.mention in game.joueurs:
+        return "erreur_format", "Nous n'êtes pas autorisé à effectuer cette action sur cette partie"
+    try:
+        x = -1
+        x = int(message_split[3]) - 1
+    except IndexError:
+        return "erreur_format",  "Veuillez spécifier des coordonnées X"
+    try:
+        y = -1
+        y = int(message_split[4]) - 1
+    except IndexError:
+        return "erreur_format", "Veuillez spécifier des coordonnées Y"
+
+    if x < game.longueur and x >= 0:
+        if y < game.hauteur and y >= 0:
+            return game, x,y
+        else:
+            return "erreur_format", "Valeur Y incorrecte"
+    else:
+        if y < game.hauteur and y >= 0:
+            return "erreur_format", "Valeur X incorrecte"
+        else:
+            return "erreur_format", "Valeurs X et Y incorrectes"
+
+
 # Commandes Discord
 
 @client.event
 async def on_message(message):
-    pas_message = False
-    try:
-        message_split = message.content.split()
-        message_split[0]
-    except:
-        pas_message = True
+    if message.author == client.user:
+        return
+    if message.author.bot:
+        return
 
-    if pas_message==False:
-        if message_split[0] == "+dm":
-            error = False
-            nom_dispo = True
-            pas_nom = True
-            pas_mention = False
+    split_message = message.content.split()
 
-            if message_split[1] == "new":
-                try:
-                    nom_game = message_split[2]
-                    pas_nom = False
-                except IndexError:
-                    await send_message(message.channel, "Veuillez spécifier un nom de partie")
+    if len(split_message) < 2:
+        return
+    if message_split[0] != "+dm":
+        return
 
-                try:
-                    liste_parties[nom_game]
-                    nom_dispo = False
-                    await send_message(message.channel, "Nom de partie déjà utilisé")
-                except:
-                    pass
+    if message_split[1] == "new":
+        error = False
+        try:
+            nom_game = message_split[2]
+        except IndexError:
+            error = True
+            await send_message(message.channel, "Veuillez spécifier un nom de partie")
 
-                if nom_dispo == True and pas_nom == False:
-                    liste_parties[nom_game] = Game(nom=nom_game, joueur=message.author.mention)
-                    await affiche_game(message.channel, liste_parties[nom_game])
-                    await send_message(message.channel, "Partie `{}` crée".format(nom_game))
+        try:
+            liste_parties[nom_game]
+            error = True
+            await send_message(message.channel, "Nom de partie déjà utilisé")
+        except:
+            pass
 
-            elif message_split[1] == "dig" or message_split[1] == "d":
-                try:
-                    nom_game = message_split[2]
-                except IndexError:
-                    await send_message(message.channel, "Veuillez spécifier un nom de partie")
-                    error = True
+        if not error:
+            liste_parties[nom_game] = Game(nom=nom_game, joueur=message.author.mention)
+            await affiche_game(message.channel, liste_parties[nom_game])
+            await send_message(message.channel, "Partie `{}` crée".format(nom_game))
 
-                try:
-                    liste_parties[nom_game]
-                except:
-                    await send_message(message.channel, "La partie `{}` n'existe pas".format(nom_game))
-                    error = True
+    elif message_split[1] == "dig" or message_split[1] == "d":
+        analyse = analyse_commande(message_split)
+        if analyse[0] == "erreur_format":
+            await send_message(message.channel, analyse[1])
+        else:
+            analyse[0].click(analyse[1], analyse[2])
 
-                if error == False:
-                    if message.author.mention in liste_parties[nom_game].joueurs:
-                        if nom_game in liste_parties.keys():
-                            try:
-                                x = -1
-                                x = int(message_split[3]) - 1
-                            except IndexError:
-                                await send_message(message.channel, "Veuillez spécifier des coordonnées X")
+    elif message_split[1] == "flag" or message_split[1] == "f":
+        analyse = analyse_commande(message_split)
+        if analyse[0] == "erreur_format":
+            await send_message(message.channel, analyse[1])
+        else:
+            analyse[0].drapeau(analyse[1], analyse[2])
 
-                            try:
-                                y = -1
-                                y = int(message_split[4]) - 1
-                            except IndexError:
-                                await send_message(message.channel, "Veuillez spécifier des coordonnées Y")
+    elif message_split[1] == "add":
+        try:
+            nom_game = message_split[2]
+        except IndexError:
+            await send_message(message.channel, "Veuillez spécifier un nom de partie")
+            error = True
 
-                            if x < liste_parties[nom_game].longueur and x >= 0:
-                                if y < liste_parties[nom_game].hauteur and y >= 0:
-                                    liste_parties[nom_game].click(y, x)
-                                    await affiche_game(message.channel, liste_parties[nom_game])
+        try:
+            game = liste_parties[nom_game]
+        except:
+            await send_message(message.channel, "La partie `{}` n'existe pas".format(nom_game))
+            error = True
 
-                                else:
-                                    await send_message(message.channel, "Valeur Y incorrecte")
-                            else:
-                                if y < liste_parties[nom_game].hauteur and y >= 0:
-                                    await send_message(message.channel, "Valeur X incorrecte")
-                                else:
-                                    await send_message(message.channel, "Valeurs X et Y incorrectes")
+        if not error:
+            if message.author.mention in game.joueurs:
+                game.joueurs.append(message.mentions[0].mention)
+                await send_message(message.channel, "{} a désormais accès aux commandes de la partie `{}`".format(message.mentions[0].mention, nom_game))
+            else:
+                await send_message(message.channel, "Vous n'êtes pas autorisé à effectuer cette action sur cette partie")
 
-                        else:
-                            await send_message(message.channel, "La partie `{}` n'existe pas".format(nom_game))
-                    else:
-                        await send_message(message.channel, "Nous n'êtes pas autorisé à effectuer cette action sur cette partie")
-
-
-            elif message_split[1] == "flag" or message_split[1] == "f":
-                try:
-                    nom_game = message_split[2]
-                except IndexError:
-                    await send_message(message.channel, "Veuillez spécifier un nom de partie")
-                    error = True
-
-                try:
-                    liste_parties[nom_game]
-                except:
-                    await send_message(message.channel, "La partie `{}` n'existe pas".format(nom_game))
-                    error = True
-
-                if error == False:
-                    if message.author.mention in liste_parties[nom_game].joueurs:
-                        if nom_game in liste_parties.keys():
-                            try:
-                                x = -1
-                                x = int(message_split[3]) - 1
-                            except IndexError:
-                                await send_message(message.channel, "Veuillez spécifier des coordonnées X")
-
-                            try:
-                                y = -1
-                                y = int(message_split[4]) - 1
-                            except IndexError:
-                                await send_message(message.channel, "Veuillez spécifier des coordonnées Y")
-
-                            if x < liste_parties[nom_game].longueur and x >= 0:
-                                if y < liste_parties[nom_game].hauteur and y >= 0:
-                                    liste_parties[nom_game].drapeau(y, x)
-                                    await affiche_game(message.channel, liste_parties[nom_game])
-                                else:
-                                    await send_message(message.channel, "Valeur Y incorrecte")
-                            else:
-                                if y < liste_parties[nom_game].hauteur and y >= 0:
-                                    await send_message(message.channel, "Valeur X incorrecte")
-                                else:
-                                    await send_message(message.channel, "Valeurs X et Y incorrectes")
-
-                        else:
-                            await send_message(message.channel, "La partie `{}` n'existe pas".format(nom_game))
-                    else:
-                        await send_message(message.channel, "Nous n'êtes pas autorisé à effectuer cette action sur cette partie")
-
-            elif message_split[1] == "add":
-                try:
-                    nom_game = message_split[2]
-                except IndexError:
-                    await send_message(message.channel, "Veuillez spécifier un nom de partie")
-                    pas_mention = True
-
-                try:
-                    liste_parties[nom_game]
-                except:
-                    await send_message(message.channel, "La partie `{}` n'existe pas".format(nom_game))
-                    error = True
-
-                if pas_mention == False and error == False:
-                    if message.author.mention in liste_parties[nom_game].joueurs:
-                        if nom_game in liste_parties.keys():
-                            liste_parties[nom_game].joueurs.append(message.mentions[0].mention)
-                            await send_message(message.channel, "{} a désormais accès aux commandes de la partie `{}`".format(message.mentions[0].mention, nom_game))
-
-                        else:
-                            await send_message(message.channel, "La partie `{}` n'existe pas".format(nom_game))
-                    else:
-                        await send_message(message.channel, "Vous n'êtes pas autorisé à effectuer cette action sur cette partie")
-
-
-            elif message_split[1] == "help":
-                await send_message(message.channel, texte_aide)
+    elif message_split[1] == "help":
+        await send_message(message.channel, texte_aide)
 
 
 @client.event
